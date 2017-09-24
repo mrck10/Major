@@ -1,0 +1,8 @@
+E:\OneDrive\DashSharp\DashSharp\DashSharp\bin\Debug\Major.exe.config
+E:\OneDrive\DashSharp\DashSharp\DashSharp\bin\Debug\Major.exe
+E:\OneDrive\DashSharp\DashSharp\DashSharp\bin\Debug\Major.pdb
+E:\OneDrive\DashSharp\DashSharp\DashSharp\obj\Debug\Major.csprojResolveAssemblyReference.cache
+E:\OneDrive\DashSharp\DashSharp\DashSharp\obj\Debug\DashSharp.Form1.resources
+E:\OneDrive\DashSharp\DashSharp\DashSharp\obj\Debug\Major.csproj.GenerateResource.Cache
+E:\OneDrive\DashSharp\DashSharp\DashSharp\obj\Debug\Major.exe
+E:\OneDrive\DashSharp\DashSharp\DashSharp\obj\Debug\Major.pdb
