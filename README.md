@@ -6,4 +6,6 @@ Such as?
 - lots of in-built functions for emails, maths, gui, cui 
 - simple and easy to understand
 
+If you would like to learn Major and try it out for yourself, there is documentation and a short tutorial on how to get started.
+
 
