@@ -41,7 +41,24 @@ namespace Major
             } 
             else if (args[0] == "Set")
             {
+
                 string[] argumentSplited = args[1].Split('='); // Splits args 1 with '='
+
+                int count = 0; // counter
+
+                // This foreach statement is for old variables that need to be assigned.
+
+                foreach (object obj in VariableContent) // foreach object in variable content
+                {
+                    if (VariableNames[count] == argumentSplited[0]) 
+                    {
+                        VariableNames[count] = argumentSplited[0]; // sets old var to new var
+                        VariableContent[count] = argumentSplited[1]; 
+                        break; // "exits the line"
+                    } 
+                    count++; // count add 1
+                }
+                // if it's a new variable it will do this :
                 SetVar(argumentSplited[0], argumentSplited[1]); // Sets Left of the '=' as the Name and right as the Content.
             }
             else if (args[0] == "Print")
@@ -1284,6 +1301,35 @@ namespace Major
                     file.Close(); // Close the streamReader / File Reader
                 }
             } 
+            else if (args[0] == "foreach")
+            {
+                string[] arraySplit = MakeArray(VariableCheack(args[3])); // makes an array
+
+                int counter = 0; // counter
+                string argsAfter = ""; // strings after the code ( the code to do after the for comand ) 
+
+                foreach (string str in args) // foreach string in args
+                {
+                    if (counter > 3) // if counter is above 3 ( after the for command )
+                    {
+                        argsAfter += str + "-"; // add the args to the main args
+                    }
+                    counter++; // counter add 1
+                }
+
+                argsAfter = argsAfter.TrimEnd('-'); // trim the end of the args after string
+
+                foreach (object obj in arraySplit) // does the actuall for loop
+                {
+                    SetVar(args[1], obj); // sets the var 
+                    CheackCode(VariableCheack(argsAfter)); // cheacks the code
+
+                    VariableNames.Remove(args[1]); // removes the variable we just used
+                    VariableContent.Remove(obj); // removes the variable we just used
+
+                    // now it's ready to loop again scince we removed the variable
+                }
+            }
             else
             {
                 int counter = 0; // counter int

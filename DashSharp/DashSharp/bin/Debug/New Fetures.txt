@@ -1,0 +1,2 @@
+- Added a foreach function
+- Now not all variables are constant, you can change them ass you please.

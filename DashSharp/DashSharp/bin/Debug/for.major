@@ -1,0 +1,9 @@
+void Main {
+
+Set-Value=Hello world
+Echo-Value
+Set-Value=Hello boi
+Echo-Value
+Set-Value=Paused..
+Pause-Value
+}
