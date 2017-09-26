@@ -4,12 +4,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DashSharp
+namespace Major
 {
     public class StringToFormula
     {
-        private string[] _operators = { "-", "+", "/", "*", "^" };
-        private Func<double, double, double>[] _operations = {
+        // This code was found here https://social.msdn.microsoft.com/Forums/vstudio/en-US/7f62b87d-a35c-4074-a0f0-84a9dd7ff0a5/convert-string-to-formula?forum=csharpgeneral
+        // Yes i did Script kidie for this BUT this is the only thing i did script kidie.
+        // Thank you Mitja Bonca ( the person who wrote this ) 
+
+        private static string[] _operators = { "-", "+", "/", "*", "^" };
+        private static Func<double, double, double>[] _operations = {
         (a1, a2) => a1 - a2,
         (a1, a2) => a1 + a2,
         (a1, a2) => a1 / a2,
@@ -17,7 +21,7 @@ namespace DashSharp
         (a1, a2) => Math.Pow(a1, a2)
     };
 
-        public double Eval(string expression)
+        public static double Eval(string expression)
         {
             List<string> tokens = getTokens(expression);
             Stack<double> operandStack = new Stack<double>();
@@ -66,7 +70,7 @@ namespace DashSharp
             return operandStack.Pop();
         }
 
-        private string getSubExpression(List<string> tokens, ref int index)
+        private static string getSubExpression(List<string> tokens, ref int index)
         {
             StringBuilder subExpr = new StringBuilder();
             int parenlevels = 1;
@@ -99,7 +103,7 @@ namespace DashSharp
             return subExpr.ToString();
         }
 
-        private List<string> getTokens(string expression)
+        private static List<string> getTokens(string expression)
         {
             string operators = "()^*/+-";
             List<string> tokens = new List<string>();
@@ -128,5 +132,5 @@ namespace DashSharp
             }
             return tokens;
         }
-    } // stuff here i found somewere lmao 
+    } 
 }

@@ -1,0 +1,20 @@
+void Main {
+Echo-Testing Some In built Functions
+Color-Fore=Green
+Print-Testing some 
+Color-Fore=Cyan
+Print-In built Functions
+Echo- 
+Pause- Prompt Pause
+Console-Clear
+Console-GetKey-KeyPressed
+Echo-KeyPressed
+Console-Label-15,20-Hello World!
+Color-Reset
+Echo-Give me some Math Formula (Computer)
+Input->-MathFormula
+Math-Calc-MathFormula-Result
+Echo-Result
+Pause-
+
+}
