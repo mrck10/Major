@@ -8,4 +8,6 @@ Such as?
 
 If you would like to learn Major and try it out for yourself, there is documentation and a short tutorial on how to get started on the wiki.
 
+If you would like to join our discord channel : https://discord.gg/wQAFqsp
+
 
