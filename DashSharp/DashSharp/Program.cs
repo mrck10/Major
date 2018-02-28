@@ -26,19 +26,32 @@ namespace DashSharp
                 bool isReadingMain = false; // is it reading inside void Main?
                 while ((line = file.ReadLine()) != null) // while the file is reading
                 {
-                    if (line == "void Main {") // if we found the Main void
+                    if (line.Contains("void Main")) // if we found the Main void
                     {
                         isReadingMain = true;
                     }
 
-                    if (line == "}") // if the Main is Ended
+                    if (line.Contains("}")) // if the Main is Ended
                     {
                         isReadingMain = false;
                     }
 
+                    if (line.Contains("Console-Allow"))
+                    {
+                        AllocConsole();
+                    }
+
                     if (isReadingMain) // if insdie Main
                     {
-                        LineCheck.CheackCode(line); // Cheack line
+                        if (line.Contains(";"))
+                        {
+                            string[] SplitIt = line.Split(';');
+                            LineCheck.CheackCode(SplitIt[0]);
+                        }
+                        else
+                        {
+                            LineCheck.CheackCode(line); // Cheack line
+                        }
                     }
 
                     counter++; // counter add 1
@@ -51,12 +64,15 @@ namespace DashSharp
             }
         }
 
+        [System.Runtime.InteropServices.DllImport("kernel32.dll")]
+        private static extern bool AllocConsole();
 
 
-        
 
 
-        /* private static bool CompileCode(System.CodeDom.Compiler.CodeDomProvider _CodeProvider, string _SourceCode, string _SourceFile, string _ExeFile, string _AssemblyName, string[] _ResourceFiles, ref string _Errors) 
+
+
+        private static bool CompileCode(System.CodeDom.Compiler.CodeDomProvider _CodeProvider, string _SourceCode, string _SourceFile, string _ExeFile, string _AssemblyName, string[] _ResourceFiles, ref string _Errors) 
         {
             // set interface for compilation
             System.CodeDom.Compiler.ICodeCompiler _CodeCompiler = _CodeProvider.CreateCompiler();
@@ -161,7 +177,7 @@ namespace DashSharp
             // Return the results of compilation - Success
             return true;
         }
-        */
+        
 
     } 
 }

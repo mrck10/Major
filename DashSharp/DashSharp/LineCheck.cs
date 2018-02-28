@@ -20,6 +20,10 @@ using System.Drawing.Imaging;
 using Microsoft.CSharp;
 using System.CodeDom.Compiler;
 using Major;
+using System.Speech.Synthesis;
+using System.Linq.Expressions;
+using Microsoft.Win32;
+using System.Speech.Recognition;
 
 namespace Major
 {
@@ -31,7 +35,6 @@ namespace Major
         {
             FormRelatedFunctions FormRelatedFunctions = new FormRelatedFunctions();
             Cryto Cryto = new Cryto();
-            EmailFunctions EmailFunctions = new EmailFunctions();
 
             string[] args = line.Split(splitDash); // Splits the line into arguments which are divied up by the Dash (which defualtly is '-')
 
@@ -95,6 +98,20 @@ namespace Major
                 else if (args[1] == "Max")
                 {
                     SetVar(args[4], Math.Max(double.Parse(VariableCheack(args[2])), double.Parse(VariableCheack(args[3]))));
+                }
+                else if (args[1] == "Random")
+                {
+                    if (args[2] == "FromArray")
+                    {
+                        string[] array = MakeArray(VariableCheack(args[3]));
+                        Random random = new Random();
+                        SetVar(args[4], array[random.Next(array.Length)]);
+                    } else if (args[2] == "Range")
+                    {
+                        string[] numbersArray = MakeArray(VariableCheack(args[3]));
+                        Random random = new Random();
+                        SetVar(args[4], random.Next(int.Parse(numbersArray[0]), int.Parse(numbersArray[1])));
+                    }
                 }
             } 
             else if (args[0] == "File")
@@ -168,61 +185,67 @@ namespace Major
 
                     if (EqSplit[0] == "Username")
                     {
-                        EmailFunctions.emailAdress = VariableCheack(EqSplit[1]);
-
+                        emailAdress = VariableCheack(EqSplit[1]);
                     }
                     else if (EqSplit[0] == "Password")
                     {
-                        EmailFunctions.emailPassword = VariableCheack(EqSplit[1]);
+                       emailPassword = VariableCheack(EqSplit[1]);
                     }
                     else if (EqSplit[0] == "Target")
                     {
-                        EmailFunctions.emailTo = VariableCheack(EqSplit[1]);
+                        emailTo = VariableCheack(EqSplit[1]);
                     }
                     else if (EqSplit[0] == "Body")
                     {
-                        EmailFunctions.emailBody = VariableCheack(EqSplit[1]);
+                        emailBody = VariableCheack(EqSplit[1]);
                     }
                     else if (EqSplit[0] == "Subject")
                     {
-                        EmailFunctions.emailTitle = VariableCheack(EqSplit[1]);
+                        emailTitle = VariableCheack(EqSplit[1]);
                     }
                     else if (EqSplit[0] == "Server")
                     {
-                        EmailFunctions.emailSMTPserver = VariableCheack(EqSplit[1]);
+                        emailSMTPserver = VariableCheack(EqSplit[1]);
                     }
                     else if (EqSplit[0] == "Port")
                     {
-                        EmailFunctions.emailPort = int.Parse(VariableCheack(EqSplit[1]));
+                        emailPort = int.Parse(VariableCheack(EqSplit[1]));
                     }
                 }
                 else if (args[1] == "Send") 
                 {
-                    MailMessage mail = new MailMessage(); // Declares a new Email
-                    SmtpClient SmtpServer = new SmtpClient(EmailFunctions.emailSMTPserver); // Gets the Server
-
-                    mail.From = new MailAddress(EmailFunctions.emailAdress); // Gets the username
-                    if (EmailFunctions.emailTo.Contains(",")) // if it is a array than have multiple email adresses
+                    try
                     {
-                        string[] EmailAdresses = EmailFunctions.emailTo.Split(','); // Splits like it would in an array
-                        foreach (string str in EmailAdresses) // foreach Email adress
+                        MailMessage mail = new MailMessage(); // Declares a new Email
+                        SmtpClient SmtpServer = new SmtpClient(emailSMTPserver); // Gets the Server
+                        
+
+                        mail.From = new MailAddress(emailAdress); // Gets the username
+                        if (emailTo.Contains(",")) // if it is a array than have multiple email adresses
                         {
-                            mail.To.Add(str); // Add the email to the sendng list
+                            string[] EmailAdresses = emailTo.Split(','); // Splits like it would in an array
+                            foreach (string str in EmailAdresses) // foreach Email adress
+                            {
+                                mail.To.Add(str); // Add the email to the sendng list
+                            }
                         }
-                    }
-                    else
+                        else
+                        {
+                            mail.To.Add(emailTo); // adds one email
+                        }
+
+                        mail.Subject = emailTitle; // Gets the subject and sets it
+                        mail.Body = emailBody; // Gets the Body and sets it
+
+                        SmtpServer.Port = emailPort;  // Gets the Port and sets it
+                        SmtpServer.Credentials = new System.Net.NetworkCredential(emailAdress, emailPassword); // Gets Credentials and Sets them
+                        SmtpServer.EnableSsl = emailSLL; // Gets email sll and sets it
+
+                        SmtpServer.Send(mail); // Sends the email. DONE
+                    } catch (Exception e)
                     {
-                        mail.To.Add(EmailFunctions.emailTo); // adds one email
+                        MessageBox.Show(e.Message);
                     }
-
-                    mail.Subject = EmailFunctions.emailTitle; // Gets the subject and sets it
-                    mail.Body = EmailFunctions.emailBody; // Gets the Body and sets it
-
-                    SmtpServer.Port = EmailFunctions.emailPort;  // Gets the Port and sets it
-                    SmtpServer.Credentials = new System.Net.NetworkCredential(EmailFunctions.emailAdress, EmailFunctions.emailPassword); // Gets Credentials and Sets them
-                    SmtpServer.EnableSsl = EmailFunctions.emailSLL; // Gets email sll and sets it
-
-                    SmtpServer.Send(mail); // Sends the email. DONE
                 }
             } 
             else if (args[0] == "Animation")
@@ -285,15 +308,41 @@ namespace Major
             } 
             else if (args[0] == "Web")
             {
-                WebClient webClient = new WebClient(); // new Webclient 
 
                 if (args[1] == "Scrape")
                 {
-                    SetVar(args[3], webClient.DownloadString(VariableCheack(@args[2]))); // Downloads the site code. Sets it as a variable
+                    using (var webClient = new WebClient())
+                    {
+                        SetVar(args[3], webClient.DownloadString(VariableCheack(@args[2]))); // Downloads the site code. Sets it as a variable
+                    }
                 }
                 else if (args[1] == "DownloadFile") 
                 {
-                    webClient.DownloadFile(VariableCheack(@args[2]), VariableCheack(@args[3])); // Downloads the file, Sets it as a variable
+                    using (var webClient = new WebClient())
+                    {
+                        webClient.DownloadFile(VariableCheack(@args[2]), VariableCheack(@args[3])); // Downloads the file, Sets it as a variable
+                    }
+                } 
+                else if (args[1] == "Convert")
+                {
+                    if (args[2] == "IP")
+                    {
+                        if (args[3] == "Dns")
+                        {
+                            IPAddress IPAddress = IPAddress.Parse(VariableCheack(args[4])); // Gets the Input truns in it to an IP adress so we can work with it.
+                            IPHostEntry GetHost = Dns.GetHostEntry(IPAddress); // Gets the Dns from the ip.
+                            SetVar(args[5], GetHost.HostName); // Gets the Hosts Host Name and sets it as a variable
+                        }
+                    } 
+                    else if (args[2] == "Dns")
+                    {
+                        if (args[3] == "IP")
+                        {
+                            IPHostEntry hostname = Dns.GetHostByName(VariableCheack(args[4])); // Get the dns by name AKA Convert Dns to Ip
+                            IPAddress[] ip = hostname.AddressList; // Make an array.
+                            SetVar(args[5], ip[0].ToString()); // Convert To string so than we can set it as a variable
+                        }
+                    }
                 }
             } 
             else if (args[0] == "Pause")
@@ -326,16 +375,47 @@ namespace Major
                 }
                 else if (args[1] == "Split")
                 {
-                    string[] args2Splitted = args[2].Split(StringToChar(args[3])); // Splits arg 2 with the charitor to split with (String to Char Function)
+                    string[] args2Splitted = VariableCheack(args[2]).Split(StringToChar(args[3])); // Splits arg 2 with the charitor to split with (String to Char Function)
                     int count = 0; // the counter
                     foreach (string str in args2Splitted)  // Foreach string str in args2Spliited
                     {
                         SetVar(args[4] + count.ToString(), VariableCheack(str)); // Set outputvar + number so each split is outputvar + number
                         count++; // adds 1 to count (++)
                     }
-
+                } 
+                else if (args[1] == "Length")
+                {
+                    int length = VariableCheack(args[2]).Length; // gets the strings length
+                    SetVar(args[3], length);  // return / set the variable to length
                 }
+                else if (args[1] == "Contains")
+                {
+                    if (VariableCheack(args[2]).Contains(VariableCheack(args[3]))) // if args 2 contains args 3
+                    {
+                        SetVar(args[4], "true"); // return / set the variable to true
+                    } else
+                    {
+                        SetVar(args[4], "false"); // return / set the variable to false
+                    }
+                }
+                else if (args[1] == "Replace")
+                {
+                    SetVar(args[5], args[4].Replace(StringToChar(args[2]), StringToChar(args[3]))); // replace function
+                }
+                else if (args[1] == "Copy")
+                {
+                    SetVar(args[3], VariableCheack(args[2])); // copy function
+                }
+                else if (args[1] == "Compare")
+                {
+                    SetVar(args[4], String.Compare(VariableCheack(args[2]), VariableCheack(args[3]))); // compare function
+                }
+                
             } 
+            else if (args[0] == "MessageBox")
+            {
+                MessageBox.Show(VariableCheack(args[1]));
+            }
             else if (args[0] == "Console")
             {
                 if (args[1] == "GetKey")
@@ -526,8 +606,6 @@ namespace Major
                     Console.Clear(); // Clears the Console Window
                 }
 
-
-
             } // Console realted commands
             else if (args[0] == "Cryto")
             {
@@ -565,18 +643,18 @@ namespace Major
                 {
                     aForm.Close(); // Closes form
                 }
-                else if (args[1] == "Title")
+                else if (args[1] == "NewGUI")
                 {
-                    aForm.Text = VariableCheack(args[2]); // Sets Form title to arguments 2
+                    aForm = new Form();
                 }
                 else if (args[1] == "Settings")
                 {
-                    string[] argumentsSplitted = args[2].Split('=');
+                    string[] argumentsSplitted = VariableCheack(args[2]).Split('=');
                     if (argumentsSplitted[0] == "FullScreen")
                     {
                         if (argumentsSplitted[1] == "true")
                         {
-                            aForm.FormBorderStyle = FormBorderStyle.None; 
+                            aForm.FormBorderStyle = FormBorderStyle.None;
                             aForm.WindowState = FormWindowState.Maximized; // sets it to full screen if Full Screen is true
                         }
                         else
@@ -600,24 +678,24 @@ namespace Major
                     }
                     if (argumentsSplitted[0] == "Width")
                     {
-                        aForm.Width = int.Parse(argumentsSplitted[1]); // Sets the Form width 
+                        aForm.Width = int.Parse(VariableCheack(argumentsSplitted[1])); // Sets the Form width 
                     }
                     if (argumentsSplitted[0] == "Height") // Sets the form Height
                     {
-                        aForm.Height = int.Parse(argumentsSplitted[1]);
+                        aForm.Height = int.Parse(VariableCheack(argumentsSplitted[1]));
                     }
                     if (argumentsSplitted[0] == "Size") // sets the Form size ( size is width + height )
                     {
-                        string[] splittedArgument = argumentsSplitted[1].Split(','); // Splits string
+                        string[] splittedArgument = VariableCheack(argumentsSplitted[1]).Split(','); // Splits string
                         aForm.Width = int.Parse(splittedArgument[0]); // Converts both ints
                         aForm.Height = int.Parse(splittedArgument[1]);
                     }
-                    if (argumentsSplitted[0] == "Icon") 
+                    if (argumentsSplitted[0] == "Icon")
                     {
-                        Icon ico = new Icon(@argumentsSplitted[1]); // Gets the icon from the file
+                        Icon ico = new Icon(@VariableCheack(argumentsSplitted[1])); // Gets the icon from the file
                         aForm.Icon = ico; // Sets the Icon
                     }
-                    if (argumentsSplitted[0] == "BorderStyle") 
+                    if (argumentsSplitted[0] == "BorderStyle")
                     {
                         if (argumentsSplitted[1] == "Fixed3D")
                         {
@@ -648,6 +726,10 @@ namespace Major
                             aForm.FormBorderStyle = FormBorderStyle.FixedToolWindow; // Sets the Borderstyle to Fixed Tool Window
                         }
                     }
+                    else if (argumentsSplitted[0] == "Title")
+                    {
+                        aForm.Text = VariableCheack(argumentsSplitted[1]); // Sets Form title to arguments 2
+                    }
                 }
                 else if (args[1] == "Color")
                 {
@@ -670,7 +752,7 @@ namespace Major
                             // For all of The get commands, it's cheacking if its value has been called than settings an output variable with the get Value
                             if (args[3] == "Name")
                             {
-                                SetVar(args[4], c.Name); 
+                                SetVar(args[4], c.Name);
                             }
                             else if (args[3] == "Font")
                             {
@@ -708,6 +790,7 @@ namespace Major
                                     SetVar(args[4], ((ProgressBar)c).Value);
                                 }
                             }
+
                         }
                     }
                 }
@@ -754,13 +837,14 @@ namespace Major
                 {
                     foreach (Control c in aForm.Controls) // Foreach Contorl in aForm
                     {
+                        string[] Split = VariableCheack(args[2]).Split('=');
+
                         if (c.Name == args[1] && c is Label) // if it's a label
                         {
 
                             // Basicly everything here is the same, just diffrent property  sets.
 
 
-                            string[] Split = VariableCheack(args[2]).Split('=');
                             if (Split[0] == "Text")
                             {
                                 ((Label)c).Text = Split[1];
@@ -785,15 +869,41 @@ namespace Major
                             }
                             else if (Split[0] == "Font")
                             {
-                                string[] fontStuff = MakeArray(Split[1]);
-                                ((Label)c).Font = new Font(fontStuff[0], int.Parse(fontStuff[1]), FontStyle.Regular);
+                               // string[] fontStuff = MakeArray(Split[1]);
+                                var fcv = new FontConverter();
+                                Font font = fcv.ConvertFromString(Split[1]) as Font; 
+                                ((Label)c).Font = font;
+                            }
+                            else if (Split[0] == "Width")
+                            {
+                                ((Label)c).Width = int.Parse(Split[1]);
+                            }
+                            else if (Split[0] == "Height")
+                            {
+                                ((Label)c).Height = int.Parse(Split[1]);
+                            }
+                            else if (Split[0] == "Size")
+                            {
+                                string[] sizeSplit = MakeArray(Split[1]);
+                                ((Label)c).Width = int.Parse(sizeSplit[0]);
+                                ((Label)c).Height = int.Parse(sizeSplit[1]);
+                            }
+                            else if (Split[0] == "AutoSize")
+                            {
+                                if (Split[1] == "true")
+                                {
+                                    ((Label)c).AutoSize = true;
+                                }
+                                else
+                                {
+                                    ((Label)c).AutoSize = false;
+                                }
                             }
 
 
                         }
                         if (c.Name == args[1] && c is TextBox)
                         {
-                            string[] Split = VariableCheack(args[2]).Split('=');
                             if (Split[0] == "Text")
                             {
                                 ((TextBox)c).Text = Split[1];
@@ -804,8 +914,10 @@ namespace Major
                             }
                             else if (Split[0] == "Font")
                             {
-                                string[] fontStuff = MakeArray(Split[1]);
-                                ((TextBox)c).Font = new Font(fontStuff[0], int.Parse(fontStuff[1]), FontStyle.Regular);
+                                // string[] fontStuff = MakeArray(Split[1]);
+                                var fcv = new FontConverter();
+                                Font font = fcv.ConvertFromString(Split[1]) as Font;
+                                ((TextBox)c).Font = font;
                             }
                             else if (Split[0] == "BackColor")
                             {
@@ -819,6 +931,25 @@ namespace Major
                             {
                                 string[] Location = MakeArray(Split[1]);
                                 ((TextBox)c).Location = new Point(int.Parse(Location[0]), int.Parse(Location[1]));
+                            }
+                            else if (Split[0] == "Width")
+                            {
+                                ((TextBox)c).Width = int.Parse(Split[1]);
+                            }
+                            else if (Split[0] == "Height")
+                            {
+                                ((TextBox)c).Height = int.Parse(Split[1]);
+                            }
+                            else if (Split[0] == "Size")
+                            {
+                                string[] sizeSplit = MakeArray(Split[1]);
+                                ((TextBox)c).Width = int.Parse(sizeSplit[0]);
+                                ((TextBox)c).Height = int.Parse(sizeSplit[1]);
+                            }
+                            else if (Split[0] == "PasswordChar")
+                            {
+                                char[] string2Char = Split[1].ToCharArray();
+                                ((TextBox)c).PasswordChar = string2Char[0];
                             }
                             else if (Split[1].Contains("true"))
                             {
@@ -853,7 +984,6 @@ namespace Major
                         }
                         if (c.Name == args[1] && c is GroupBox)
                         {
-                            string[] Split = VariableCheack(args[2]).Split('=');
                             if (Split[0] == "Text")
                             {
                                 ((GroupBox)c).Text = Split[1];
@@ -877,8 +1007,10 @@ namespace Major
                             }
                             else if (Split[0] == "Font")
                             {
-                                string[] fontStuff = MakeArray(Split[1]);
-                                ((GroupBox)c).Font = new Font(fontStuff[0], int.Parse(fontStuff[1]), FontStyle.Regular);
+                                // string[] fontStuff = MakeArray(Split[1]);
+                                var fcv = new FontConverter();
+                                Font font = fcv.ConvertFromString(Split[1]) as Font;
+                                ((GroupBox)c).Font = font;
                             }
                             else if (Split[0] == "Width")
                             {
@@ -909,7 +1041,6 @@ namespace Major
                         }
                         if (c.Name == args[1] && c is PictureBox)
                         {
-                            string[] Split = VariableCheack(args[2]).Split('=');
                             if (Split[0] == "Text")
                             {
                                 ((PictureBox)c).Text = Split[1];
@@ -933,12 +1064,13 @@ namespace Major
                             }
                             else if (Split[0] == "Font")
                             {
-                                string[] fontStuff = MakeArray(Split[1]);
-                                ((PictureBox)c).Font = new Font(fontStuff[0], int.Parse(fontStuff[1]), FontStyle.Regular);
+                                // string[] fontStuff = MakeArray(Split[1]);
+                                var fcv = new FontConverter();
+                                Font font = fcv.ConvertFromString(Split[1]) as Font;
+                                ((PictureBox)c).Font = font;
                             }
                             else if (Split[0] == "Width")
                             {
-                                //string[] fontStuff = MakeArray(Split[1]);
                                 ((PictureBox)c).Width = int.Parse(Split[1]);
                             }
                             else if (Split[0] == "Height")
@@ -969,7 +1101,6 @@ namespace Major
                         }
                         if (c.Name == args[1] && c is Button)
                         {
-                            string[] Split = VariableCheack(args[2]).Split('=');
                             if (Split[0] == "Text")
                             {
                                 ((Button)c).Text = Split[1];
@@ -993,8 +1124,10 @@ namespace Major
                             }
                             else if (Split[0] == "Font")
                             {
-                                string[] fontStuff = MakeArray(Split[1]);
-                                ((Button)c).Font = new Font(fontStuff[0], int.Parse(fontStuff[1]), FontStyle.Regular);
+                                // string[] fontStuff = MakeArray(Split[1]);
+                                var fcv = new FontConverter();
+                                Font font = fcv.ConvertFromString(Split[1]) as Font;
+                                ((Button)c).Font = font;
                             }
                             else if (Split[0] == "Event")
                             {
@@ -1013,10 +1146,35 @@ namespace Major
                                 allArgsAfter[1] = allArgsAfter[1].TrimEnd('-'); // changed this so it makes more scence
                                 ((Button)c).Click += (s, e) => { CheackCode(VariableCheack(allArgsAfter[1])); }; // Click button Event add
                             }
+
+                            else if (Split[0] == "Width")
+                            {
+                                ((Button)c).Width = int.Parse(Split[1]);
+                            }
+                            else if (Split[0] == "Height")
+                            {
+                                ((Button)c).Height = int.Parse(Split[1]);
+                            }
+                            else if (Split[0] == "Size")
+                            {
+                                string[] sizeSplit = MakeArray(Split[1]);
+                                ((Button)c).Width = int.Parse(sizeSplit[0]);
+                                ((Button)c).Height = int.Parse(sizeSplit[1]);
+                            }
+                            else if (Split[0] == "AutoSize")
+                            {
+                                if (Split[1] == "true")
+                                {
+                                    ((Button)c).AutoSize = true;
+                                }
+                                else
+                                {
+                                    ((Button)c).AutoSize = false;
+                                }
+                            }
                         }
                         if (c.Name == args[1] && c is ProgressBar)
                         {
-                            string[] Split = VariableCheack(args[2]).Split('=');
                             if (Split[0] == "Text")
                             {
                                 ((ProgressBar)c).Text = Split[1];
@@ -1040,8 +1198,10 @@ namespace Major
                             }
                             else if (Split[0] == "Font")
                             {
-                                string[] fontStuff = MakeArray(Split[1]);
-                                ((ProgressBar)c).Font = new Font(VariableCheack(fontStuff[0]), int.Parse(VariableCheack(fontStuff[1])), FontStyle.Regular);
+                                // string[] fontStuff = MakeArray(Split[1]);
+                                var fcv = new FontConverter();
+                                Font font = fcv.ConvertFromString(Split[1]) as Font;
+                                ((ProgressBar)c).Font = font;
                             }
                             else if (Split[0] == "Value")
                             {
@@ -1058,7 +1218,6 @@ namespace Major
                         }
                         if (c.Name == args[1] && c is Panel)
                         {
-                            string[] Split = args[2].Split('=');
                             Split[1] = VariableCheack(Split[1]);
 
                             if (Split[0] == "BackColor")
@@ -1080,8 +1239,10 @@ namespace Major
                             }
                             else if (Split[0] == "Font")
                             {
-                                string[] fontStuff = MakeArray(Split[1]);
-                                ((Panel)c).Font = new Font(fontStuff[0], int.Parse(fontStuff[1]), FontStyle.Regular);
+                                // string[] fontStuff = MakeArray(Split[1]);
+                                var fcv = new FontConverter();
+                                Font font = fcv.ConvertFromString(Split[1]) as Font;
+                                ((Panel)c).Font = font;
                             }
                             else if (Split[0] == "Width")
                             {
@@ -1100,7 +1261,6 @@ namespace Major
                         }
                         if (c.Name == args[1] && c is TrackBar)
                         {
-                            string[] Split = VariableCheack(args[2]).Split('=');
                             if (Split[0] == "Text")
                             {
                                 ((TrackBar)c).Text = Split[1];
@@ -1124,8 +1284,10 @@ namespace Major
                             }
                             else if (Split[0] == "Font")
                             {
-                                string[] fontStuff = MakeArray(Split[1]);
-                                ((TrackBar)c).Font = new Font(fontStuff[0], int.Parse(fontStuff[1]), FontStyle.Regular);
+                                // string[] fontStuff = MakeArray(Split[1]);
+                                var fcv = new FontConverter();
+                                Font font = fcv.ConvertFromString(Split[1]) as Font;
+                                ((TrackBar)c).Font = font;
                             }
                             else if (Split[0] == "Value")
                             {
@@ -1142,8 +1304,7 @@ namespace Major
                             else if (Split[0] == "Size")
                             {
                                 string[] Size = MakeArray(Split[1]);
-                                ((TrackBar)c).Width = int.Parse(Size[0]);
-                                ((TrackBar)c).Height = int.Parse(Size[1]);
+                                ((TrackBar)c).Size = new System.Drawing.Size(int.Parse(Size[0]), int.Parse(Size[1]));
                             }
                             else if (Split[0] == "Minimum")
                             {
@@ -1168,8 +1329,10 @@ namespace Major
             {
                 SendKeys.SendWait(args[1]); // SendKeys.SendWait works but the other one (what most people use) doesn't work.
             } 
-            else if (args[0] == "if") 
+            else if (args[0].Contains("if")) 
             {
+                
+
                 if (args[1].Contains("=")) // cheack if its a =
                 {
                     string[] splitArg = args[1].Split('='); // Splits by Arg
@@ -1191,7 +1354,50 @@ namespace Major
                     {
                         CheackCode(VariableCheack(combinedArgs)); // cheacks the Code
                     }
-                }
+                } else if (args[1].Contains(">"))
+                {
+                    string[] splitArg = args[1].Split('>'); // Splits by Arg
+
+                    string combinedArgs = ""; // Combined args is Set
+                    int count = 0; // counter
+                    foreach (string s in args)
+                    {
+                        if (count > 1)
+                        {
+                            combinedArgs += s + "-"; // Adds args to combined Args
+                        }
+                        count++;
+                    }
+
+                    combinedArgs = combinedArgs.TrimEnd('-'); // Trims the end so it does not have a '-' on the end
+
+                    if (double.Parse(VariableCheack(splitArg[0])) > double.Parse(VariableCheack(splitArg[1]))) // does the if command
+                    {
+                        
+                        CheackCode(VariableCheack(combinedArgs)); // cheacks the Code
+                    }
+                } else if (args[1].Contains("<"))
+                {
+                    string[] splitArg = args[1].Split('<'); // Splits by Arg
+
+                    string combinedArgs = ""; // Combined args is Set
+                    int count = 0; // counter
+                    foreach (string s in args)
+                    {
+                        if (count > 1)
+                        {
+                            combinedArgs += s + "-"; // Adds args to combined Args
+                        }
+                        count++;
+                    }
+
+                    combinedArgs = combinedArgs.TrimEnd('-'); // Trims the end so it does not have a '-' on the end
+
+                    if (double.Parse(VariableCheack(splitArg[0])) < double.Parse(VariableCheack(splitArg[1]))) // does the if command
+                    {
+                        CheackCode(VariableCheack(combinedArgs)); // cheacks the Code
+                    }
+                } 
             } 
             else if (args[0] == "Color")
             {
@@ -1234,13 +1440,22 @@ namespace Major
 
                         if (isReadingMain) // is isReadingMain is true
                         {
-                            CheackCode(currentLine); // Cheack the code for that line!
+                            if (line.Contains(";"))
+                            {
+                                LineCheck LineCheck = new LineCheck();
+                                string[] SplitIt = line.Split(';');
+                                LineCheck.CheackCode(SplitIt[0]);
+                            }
+                            else
+                            {
+                                CheackCode(currentLine); // Cheack the code for that line!
+                            }
                         }
 
                         counter++; // counter add
                     }
                     file.Close(); // Close file so no wait.
-                }
+                } 
                 else
                 {
                     int counter = 0; // counter
@@ -1265,7 +1480,16 @@ namespace Major
 
                         if (isReadingMain) // if Reading the Main void is True than...
                         {
-                            CheackCode(currentLine);  // Cheack the code , current line
+                            if (line.Contains(";"))
+                            {
+                                LineCheck LineCheck = new LineCheck();
+                                string[] SplitIt = line.Split(';');
+                                LineCheck.CheackCode(SplitIt[0]);
+                            }
+                            else
+                            {
+                                CheackCode(currentLine);  // Cheack the code , current line
+                            }
                         }
 
                         if (currentLine == "function " + args[0] + " {") // if we found it as a function
@@ -1294,7 +1518,16 @@ namespace Major
                         }
                         if (isInFunc)
                         {
-                            CheackCode(currentLine); // Cheack the code if it's in a function becuase that is what a function is!!!!
+                            if (line.Contains(";"))
+                            {
+                                LineCheck LineCheck = new LineCheck();
+                                string[] SplitIt = line.Split(';');
+                                LineCheck.CheackCode(SplitIt[0]);
+                            }
+                            else
+                            {
+                                CheackCode(currentLine); // Cheack the code if it's in a function becuase that is what a function is!!!!
+                            }
                         }
                         counter++; // add one to the counter
                     }
@@ -1329,7 +1562,184 @@ namespace Major
 
                     // now it's ready to loop again scince we removed the variable
                 }
+            } 
+            else if (args[0] == "Speech")
+            {
+                SpeechSynthesizer SpeechSynth = new SpeechSynthesizer();
+                SpeechRecognitionEngine recEngine = new SpeechRecognitionEngine();
+
+                if (args[1] == "Speak")
+                {
+                    SpeechSynth.Speak(VariableCheack(args[2])); // Speaks input.
+                } 
+                else if (args[1] == "Recognition")
+                {
+                    recEngine.SetInputToDefaultAudioDevice();
+                    Grammar g = new DictationGrammar();
+                    recEngine.LoadGrammar(g);
+                    recEngine.RecognizeAsync(RecognizeMode.Multiple);
+                    recEngine.SpeechRecognized += new EventHandler<SpeechRecognizedEventArgs>(recEngine_SpeechRecognized);
+                }
+                
             }
+            else if (args[0] == "Process")
+            {
+                Process Process = new Process(); 
+
+                if (args[1] == "Start")
+                {
+                    Process.Start(@args[2]); // Starts a program
+                } 
+                else if (args[1] == "Close")
+                {
+                    Process.Close(); // Close function
+                }
+                else if (args[1] == "Dispose")
+                {
+                    Process.Dispose(); // Dispose Function
+                }
+            } 
+            else if (args[0] == "Registry") // i only commented the first registry because they are all the same ( not really )
+            {
+                RegistryKey registryKey; // reg key
+
+                if (args[1] == "CurrentUser")
+                {
+                    if (args[2] == "SubKey")
+                    {
+                        if (args[3] == "Create")
+                        {
+                            registryKey = Registry.CurrentUser.CreateSubKey(VariableCheack(args[4])); // Creates a sub key
+                        }
+                        else if (args[3] == "Delete")
+                        {
+                            Registry.CurrentUser.DeleteSubKey(VariableCheack(args[4])); // Deletes a sub key
+                        }
+                    }
+                    else if (args[2] == "SetValue")
+                    {
+                        registryKey = Registry.CurrentUser.OpenSubKey(VariableCheack(args[3])); // Opens a sub key 
+
+                        registryKey.SetValue(VariableCheack(args[4]), VariableCheack(args[5])); // Sets a value from the sub key ^
+                    }
+                    else if (args[2] == "GetValue")
+                    {
+                        registryKey = Registry.CurrentUser.OpenSubKey(VariableCheack(args[3])); // Opens a sub key
+
+                        SetVar(args[5], registryKey.GetValue(VariableCheack(args[4]))); // Gets a value from the sub key
+                    }
+                    else if (args[2] == "DeleteValue")
+                    {
+                        registryKey = Registry.CurrentUser.OpenSubKey(VariableCheack(args[3])); // Opens a sub key
+
+                        registryKey.DeleteValue(VariableCheack(args[3])); // Gets D
+                    }
+                }
+                else if (args[1] == "CurrentConfig")
+                {
+                    if (args[2] == "SubKey")
+                    {
+                        if (args[3] == "Create")
+                        {
+                            registryKey = Registry.CurrentConfig.CreateSubKey(VariableCheack(args[4]));
+                        }
+                        else if (args[3] == "Delete")
+                        {
+                            Registry.CurrentConfig.DeleteSubKey(VariableCheack(args[4]));
+                        }
+                    }
+                    else if (args[2] == "SetValue")
+                    {
+                        registryKey = Registry.CurrentConfig.OpenSubKey(VariableCheack(args[3]));
+
+                        registryKey.SetValue(VariableCheack(args[4]), VariableCheack(args[5]));
+                    }
+                    else if (args[2] == "GetValue")
+                    {
+                        registryKey = Registry.CurrentConfig.OpenSubKey(VariableCheack(args[3]));
+
+                        SetVar(args[5], registryKey.GetValue(VariableCheack(args[4])));
+                    }
+                    else if (args[2] == "DeleteValue")
+                    {
+                        registryKey = Registry.CurrentConfig.OpenSubKey(VariableCheack(args[3]));
+
+                        registryKey.DeleteValue(VariableCheack(args[3]));
+                    }
+                }
+                else if (args[1] == "LocalMachine")
+                {
+                    if (args[2] == "SubKey")
+                    {
+                        if (args[3] == "Create")
+                        {
+                            registryKey = Registry.LocalMachine.CreateSubKey(VariableCheack(args[4]));
+                        }
+                        else if (args[3] == "Delete")
+                        {
+                            Registry.LocalMachine.DeleteSubKey(VariableCheack(args[4]));
+                        }
+                    }
+                    else if (args[2] == "SetValue")
+                    {
+                        registryKey = Registry.LocalMachine.OpenSubKey(VariableCheack(args[3]));
+
+                        registryKey.SetValue(VariableCheack(args[4]), VariableCheack(args[5]));
+                    }
+                    else if (args[2] == "GetValue")
+                    {
+                        registryKey = Registry.LocalMachine.OpenSubKey(VariableCheack(args[3]));
+
+                        SetVar(args[5], registryKey.GetValue(VariableCheack(args[4])));
+                    }
+                    else if (args[2] == "DeleteValue")
+                    {
+                        registryKey = Registry.LocalMachine.OpenSubKey(VariableCheack(args[3]));
+
+                        registryKey.DeleteValue(VariableCheack(args[3]));
+                    }
+                }
+                else if (args[1] == "Users")
+                {
+                    if (args[2] == "SubKey")
+                    {
+                        if (args[3] == "Create")
+                        {
+                            registryKey = Registry.Users.CreateSubKey(VariableCheack(args[4]));
+                        }
+                        else if (args[3] == "Delete")
+                        {
+                            Registry.Users.DeleteSubKey(VariableCheack(args[4]));
+                        }
+                    }
+                    else if (args[2] == "SetValue")
+                    {
+                        registryKey = Registry.Users.OpenSubKey(VariableCheack(args[3]));
+
+                        registryKey.SetValue(VariableCheack(args[4]), VariableCheack(args[5]));
+                    }
+                    else if (args[2] == "GetValue")
+                    {
+                        registryKey = Registry.Users.OpenSubKey(VariableCheack(args[3]));
+
+                        SetVar(args[5], registryKey.GetValue(VariableCheack(args[4])));
+                    }
+                    else if (args[2] == "DeleteValue")
+                    {
+                        registryKey = Registry.Users.OpenSubKey(VariableCheack(args[3]));
+
+                        registryKey.DeleteValue(VariableCheack(args[3]));
+                    }
+                }
+
+            }
+            else if (args[0] == "Major")
+            {
+                if (args[1] == "DoCommand")
+                {
+                    CheackCode(VariableCheack(args[2]));
+                }
+            } 
             else
             {
                 int counter = 0; // counter int
@@ -1346,23 +1756,32 @@ namespace Major
                 {
 
                     // voids
-                    if (currentLine == "void " + args[0] + " {") // is it a void?
+                    if (currentLine.Contains("void " + args[0] + "{")) // is it a void?
                     {
                         isInVoid = true;
                     }
-                    if (isInVoid == true && currentLine == "}") // is it at end of void?
+                    if (isInVoid == true && currentLine.Contains("}")) // is it at end of void?
                     {
                         isInVoid = false;
                     }
                     if (isInVoid) // is it in a void?
                     {
-                        CheackCode(currentLine);  // than Cheack the code
+                        if (line.Contains(";")) // Code Comments
+                        {
+                            LineCheck LineCheck = new LineCheck();
+                            string[] SplitIt = line.Split(';');
+                            LineCheck.CheackCode(SplitIt[0]);
+                        }
+                        else
+                        {
+                            CheackCode(currentLine);  // than Cheack the code
+                        }
                     }
 
 
 
                     // functions
-                    if (currentLine == "function " + args[0] + " {") // is it in a function?
+                    if (currentLine.Contains("function " + args[0] + " {")) // is it in a function?
                     {
                         int counter2 = 0; 
                         foreach (string str in args) // foreach string in args
@@ -1373,7 +1792,7 @@ namespace Major
                         isInFunc = true; // ok now it's safe to say were in a function.
                     }
 
-                    if (isInFunc == true && currentLine == "}") // end of function
+                    if (isInFunc == true && currentLine.Contains("}")) // end of function
                     {
                         isInFunc = false; // safe to say, where gona return
 
@@ -1390,7 +1809,16 @@ namespace Major
 
                     if (isInFunc)
                     {
-                        CheackCode(currentLine); // cheack the code current line.
+                        if (line.Contains(";")) // Code Comments
+                        {
+                            LineCheck LineCheck = new LineCheck();
+                            string[] SplitIt = line.Split(';');
+                            LineCheck.CheackCode(SplitIt[0]);
+                        }
+                        else
+                        {
+                            CheackCode(currentLine); // cheack the code current line.
+                        }
                     }
 
                     counter++; // counter add 1
@@ -1420,6 +1848,22 @@ namespace Major
 
         public void SetVar(string name, object anything)
         {
+            int count = 0; // counter
+
+            // This foreach statement is for old variables that need to be assigned.
+
+            foreach (object obj in VariableContent) // foreach object in variable content
+            {
+                if (VariableNames[count] == name)
+                {
+                    VariableNames[count] = name; // sets old var to new var
+                    VariableContent[count] = anything.ToString() ;
+                    break; // "exits the line"
+                }
+                count++; // count add 1
+            }
+            // if it's a new variable it will do this :
+            
             VariableContent.Add(anything); // Adds Content 
             VariableNames.Add(name); // Adds the Name 
         } // sets a var
@@ -1453,6 +1897,20 @@ namespace Major
         {
             char[] array = str.ToCharArray(); 
             return array; // return str but as a char array.
+        }
+
+        public string emailAdress;  // email username
+        public string emailPassword; // email password
+        public string emailTo; // email target
+        public string emailSMTPserver; // email server
+        public int emailPort; // email port
+        public bool emailSLL = true; // sll is enabled?
+        public string emailBody; // email body
+        public string emailTitle; // email Title
+
+        void recEngine_SpeechRecognized(object ob, SpeechRecognizedEventArgs e)
+        {
+            SetVar("recString", e.Result.Text);
         }
     }
 }

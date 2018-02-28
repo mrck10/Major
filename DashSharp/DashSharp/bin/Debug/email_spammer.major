@@ -1,0 +1,73 @@
+void Main {
+Gui-New-Label-headingLabel
+Gui-headingLabel-Text=Major Gmail Spammer v1
+Gui-headingLabel-Location=5,5
+Gui-headingLabel-AutoSize=true
+Gui-headingLabel-Font=Verdana,15
+
+Gui-New-TextBox-emailTextBox
+Gui-emailTextBox-Location=10,50
+Gui-emailTextBox-Text=your email
+Gui-emailTextBox-Font=Verdana,8
+
+Gui-New-TextBox-passwordTextBox
+Gui-passwordTextBox-Location=10,75
+Gui-passwordTextBox-Text=your password
+Gui-passwordTextBox-PasswordChar=*
+Gui-passwordTextBox-Font=Verdana,8
+
+Gui-New-TextBox-targetTextBox
+Gui-targetTextBox-Location=10,100
+Gui-targetTextBox-Text=target email
+Gui-targetTextBox-Font=Verdana,8
+
+Gui-New-Button-SendButton
+Gui-SendButton-Event=SpamEmail
+Gui-SendButton-Location=10,125
+Gui-SendButton-AutoSize=false
+Gui-SendButton-Size=80,40
+Gui-SendButton-Text=Spam Target Email
+
+Gui-New-TrackBar-Slider_
+Gui-Slider_-Location=120,100
+Gui-Slider_-Minimum=0
+Gui-Slider_-Maximum=5000
+Gui-Slider_-AutoSize=false
+Gui-Slider_-Size=150,20
+
+Gui-Settings-Width=300
+Gui-Settings-Height=300
+Gui-Settings-BorderStyle=FixedDialog
+
+Gui-Settings-Icon=annoy.ico
+Gui-Settings-Title=Annoy Gmail Spammer 
+
+Gui-Show
+}
+
+function SpamEmail {
+
+Gui-Get-emailTextBox-Text-email
+Gui-Get-passwordTextBox-Text-password
+Gui-Get-targetTextBox-Text-target
+
+Mail-Username=email
+Mail-Password=password
+Mail-Target=email
+Mail-Server=smtp.gmail.com
+Mail-Port=587
+Mail-Body=bodySubject
+Mail-Subject=bodySubject
+
+SpamLoop
+}
+
+function SpamLoop {
+Math-Random-Range-1000,9999-bodySubject
+Mail-Body=bodySubject
+Mail-Subject=bodySubject
+Mail-Send
+Gui-Get-Slider_-Value-memers
+Sleep-memers
+SpamLoop
+}			

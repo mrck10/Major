@@ -1,0 +1,29 @@
+void Main {
+Gui-New-Label-l
+Gui-l-Text=Speech to Text! (TTS)
+Gui-l-Location=10,10
+Gui-l-AutoSize=true
+
+Gui-New-TextBox-tb
+Gui-tb-Location=10,30
+Gui-tb-Text= 
+Gui-tb-Multiline=true
+Gui-tb-Width=200
+Gui-tb-Height=50
+
+Gui-New-Button-B
+Gui-B-Event=GetText
+Gui-B-Location=10,85
+Gui-B-Size=40,40
+Gui-B-Text=Say Stuff
+
+
+Gui-Settings-Width=240
+Gui-Settings-Height=230
+Gui-Show
+}
+
+function GetText {
+Gui-Get-tb-Text-Output
+Speech-Speak-Output
+}
